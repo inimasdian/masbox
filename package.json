@@ -2,8 +2,8 @@
 	"name": "masbox",
 	"version": "1.0.0",
 	"description": "A lightweight and customizable JavaScript image lightbox",
-	"main": "dist/masbox.umd.js",
-	"module": "dist/masbox.umd.js",
+	"main": "dist/masbox.js",
+	"module": "dist/masbox.js",
 	"style": "dist/masbox.min.css",
 	"author": "Dian Aldiansyah",
 	"license": "MIT",
@@ -14,7 +14,10 @@
 		"javascript",
 		"zoom",
 		"modal",
-		"fullscreen"
+		"fullscreen",
+		"pinch",
+		"drag",
+		"touch"
 	],
 	"homepage": "https://github.com/inimasdian/masbox#readme",
 	"repository": {
@@ -24,14 +27,21 @@
 	"bugs": {
 		"url": "https://github.com/inimasdian/masbox/issues"
 	},
+	"exports": {
+		".": {
+		"import": "./dist/masbox.js",
+		"style": "./dist/masbox.min.css"
+		}
+	},
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build && npm run minify",
-		"minify": "terser dist/masbox.umd.js -o dist/masbox.umd.min.js && cleancss -o dist/masbox.min.css src/masbox.css"
+		"minify": "terser dist/masbox.js -o dist/masbox.min.js && cleancss -o dist/masbox.min.css src/masbox.css"
 	},
 	"devDependencies": {
 		"clean-css-cli": "^5.6.3",
-		"terser": "^5.43.1",
 		"vite": "^5.0.0"
-	}
+	},
+	"type": "module"
 }
+  

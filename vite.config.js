@@ -7,13 +7,13 @@ export default defineConfig({
 		lib: {
 			entry: path.resolve(__dirname, 'src/index.js'),
 			name: 'Masbox',
-			fileName: (format) => `masbox.${format}.js`,
-			formats: ['umd'],
+			formats: ['es'],
+			fileName: () => 'masbox.js',
 		},
 		outDir: 'dist',
-		minify: false, // kita minify manual
+		minify: false,
 		rollupOptions: {
-			external: [], // kalau pakai dependensi eksternal, masukkan di sini
+			external: [],
 			output: {
 				exports: 'named',
 			},

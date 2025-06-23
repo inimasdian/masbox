@@ -34,7 +34,7 @@ npm install masbox
 ### Via CDN
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/masbox/dist/masbox.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/masbox/dist/masbox.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/masbox/dist/masbox.min.js"></script>
 ```
 
 

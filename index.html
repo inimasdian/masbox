@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Masbox Demo</title>
+        <link rel="stylesheet" href="./src/masbox.css" />
+        <style>
+            body {
+                font-family: system-ui, sans-serif;
+                background: #f9f9f9;
+                margin: 0;
+                padding: 40px;
+            }
+
+            h1 {
+                text-align: center;
+                margin-bottom: 40px;
+                font-size: 2rem;
+                color: #333;
+            }
+
+            .gallery {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 24px;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+
+            .gallery a {
+                display: block;
+                overflow: hidden;
+                border-radius: 12px;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+                background: #fff;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .gallery a:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            }
+
+            .gallery img {
+                width: 100%;
+                height: auto;
+                display: block;
+                border-radius: 12px;
+                aspect-ratio: 3/2;
+                object-fit: cover;
+            }
+
+			.gallery.landscape img {
+				aspect-ratio: 3/2;
+			}
+		
+			.gallery.portrait img {
+				aspect-ratio: 2/3;
+			}
+        </style>
+    </head>
+    <body>
+        <h1>Masbox Demo — Landscape Gallery</h1>
+        <div class="gallery">
+			<a href="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+			data-masbox="gallery" data-caption="Desert Road">
+			 	<img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80" alt="Desert Road">
+		 	</a>
+            <a href="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80"
+               data-masbox="gallery" data-caption="Alpine Reflection">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Alpine Lake">
+            </a>
+            <a href="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+               data-masbox="gallery" data-caption="Ocean Sunset">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80" alt="Ocean">
+            </a>
+            <a href="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=80"
+               data-masbox="gallery" data-caption="Misty Forest">
+                <img src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=600&q=80" alt="Forest">
+            </a>
+        </div>
+
+		<h1>Masbox Demo — Portrait Gallery</h1>
+		<div class="gallery portrait">
+			<a href="https://images.unsplash.com/photo-1570158268183-d296b2892211?auto=format&fit=crop&w=800&q=80"
+				data-masbox="gallery" data-caption="Man in Green Jacket">
+				<img src="https://images.unsplash.com/photo-1570158268183-d296b2892211?auto=format&fit=crop&w=400&q=80" alt="Portrait 2">
+			</a>
+			<a href="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80"
+				data-masbox="gallery" data-caption="Woman with Hat">
+				<img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80" alt="Portrait 3">
+			</a>
+			<a href="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80"
+				data-masbox="gallery" data-caption="Couple in Field">
+				<img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80" alt="Portrait 4">
+			</a>
+			<a href="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80" data-masbox="gallery" data-caption="Portrait by @wesleyphotography">
+				<img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80" alt="Portrait Woman">
+			</a>
+		</div>
+
+        <script src="./src/masbox.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                Masbox.bind('[data-masbox="gallery"]', {
+                    loop: true,
+                    zoom: true,
+                    caption: true,
+                    thumbnails: true,
+                    fullscreen: true,
+                    fullscreenIcon: true,
+                    fullscreenIconSize: '28px',
+                    fullscreenIconTimer: true,
+                    share: true,
+                    minZoom: 1,
+                    maxZoom: 4,
+                    onOpen: (item) => console.log('onOpen', item),
+                    onZoom: (item) => console.log('onZoom', item),
+                    onClose: (item) => console.log('onClose', item),
+                    onMove: (item) => console.log('onMove', item),
+                    onShare: (item) => {
+                        console.log('onShare', item);
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

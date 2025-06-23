@@ -1,6 +1,6 @@
 {
 	"name": "masbox",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "A lightweight and customizable JavaScript image lightbox",
 	"main": "dist/masbox.js",
 	"module": "dist/masbox.js",
@@ -29,8 +29,8 @@
 	},
 	"exports": {
 		".": {
-		"import": "./dist/masbox.js",
-		"style": "./dist/masbox.min.css"
+			"import": "./dist/masbox.js",
+			"style": "./dist/masbox.min.css"
 		}
 	},
 	"scripts": {
@@ -44,4 +44,3 @@
 	},
 	"type": "module"
 }
-  

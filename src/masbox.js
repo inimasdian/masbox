@@ -60,6 +60,7 @@ class Masbox {
 			minZoom: 0.5,
 			maxZoom: 3,
 			flip: true,
+			navigation: true,
 			rotate: true,
 			...options,
 		};
@@ -112,10 +113,14 @@ class Masbox {
 		if (!this.isOpen) return;
 		switch (e.key) {
 			case 'ArrowRight':
-				this.navigate(1);
+				if (this.options.navigation) {
+					this.navigate(1);
+				}
 				break;
 			case 'ArrowLeft':
-				this.navigate(-1);
+				if (this.options.navigation) {
+					this.navigate(-1);
+				}
 				break;
 			case 'Escape':
 				this.close();
@@ -402,18 +407,20 @@ class Masbox {
 	
 		const nav = document.createElement('div');
 		nav.className = 'masbox-navigation';
-		nav.innerHTML = `
-			<button class="prev">
-				<svg xmlns="http://www.w3.org/2000/svg" width="11" height="20" viewBox="0 0 11 20" fill="none">
-					<path d="M10.2 0a.7.7 0 0 1 .5 1.2L2.3 10l8.4 8.8a.7.7 0 1 1-1 1L.8 10.6a.7.7 0 0 1 0-1.2L9.7.2A.7.7 0 0 1 10.2 0Z" fill="white"/>
-				</svg>
-			</button>
-			<button class="next">
-				<svg xmlns="http://www.w3.org/2000/svg" width="11" height="20" viewBox="0 0 11 20" fill="none">
-					<path d="M0.8 0a.7.7 0 0 1 .5.2l8.9 8.8a.7.7 0 0 1 0 1l-8.9 8.8a.7.7 0 1 1-1-1l8.3-8.3L0.3 1.2A.7.7 0 0 1 0.8 0Z" fill="white"/>
-				</svg>
-			</button>
-		`;
+		if (this.options.navigation) {
+			nav.innerHTML = `
+				<button class="prev">
+					<svg xmlns="http://www.w3.org/2000/svg" width="11" height="20" viewBox="0 0 11 20" fill="none">
+						<path d="M10.2 0a.7.7 0 0 1 .5 1.2L2.3 10l8.4 8.8a.7.7 0 1 1-1 1L.8 10.6a.7.7 0 0 1 0-1.2L9.7.2A.7.7 0 0 1 10.2 0Z" fill="white"/>
+					</svg>
+				</button>
+				<button class="next">
+					<svg xmlns="http://www.w3.org/2000/svg" width="11" height="20" viewBox="0 0 11 20" fill="none">
+						<path d="M0.8 0a.7.7 0 0 1 .5.2l8.9 8.8a.7.7 0 0 1 0 1l-8.9 8.8a.7.7 0 1 1-1-1l8.3-8.3L0.3 1.2A.7.7 0 0 1 0.8 0Z" fill="white"/>
+					</svg>
+				</button>
+			`;
+		}
 	
 		const thumbs = document.createElement('div');
 		thumbs.className = 'masbox-thumbnails';
@@ -553,9 +560,11 @@ class Masbox {
 				};
 			});
 		}
-	
-		nav.querySelector('.prev').onclick = () => this.navigate(-1);
-		nav.querySelector('.next').onclick = () => this.navigate(1);
+		
+		if (this.options.navigation) {
+			nav.querySelector('.prev').onclick = () => this.navigate(-1);
+			nav.querySelector('.next').onclick = () => this.navigate(1);
+		}
 	
 		image.addEventListener('wheel', (e) => this.handleZoomScroll(e));
 		image.addEventListener('mousedown', (e) => this.startDrag(e));

@@ -1,6 +1,6 @@
 {
 	"name": "masbox",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "A lightweight and customizable JavaScript image lightbox",
 	"main": "dist/masbox.js",
 	"module": "dist/masbox.js",

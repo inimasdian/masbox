@@ -436,6 +436,18 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
             const url = location.href;
             if (typeof this.options.onShare === "function") {
               (_b2 = (_a2 = this.options).onShare) == null ? void 0 : _b2.call(_a2, this._createItem(platform));
+              if (platform === "copy-link") {
+                navigator.clipboard.writeText(url).then(() => {
+                  const span = btn.querySelector("span");
+                  const originalText = span.textContent;
+                  span.textContent = "Link Copied!";
+                  setTimeout(() => {
+                    span.textContent = originalText;
+                  }, 2e3);
+                }).catch((err) => {
+                  console.error("Failed to copy:", err);
+                });
+              }
             } else {
               switch (platform) {
                 case "facebook":

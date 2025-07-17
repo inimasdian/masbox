@@ -503,6 +503,20 @@ class Masbox {
 
 					if (typeof this.options.onShare === 'function') {
 						this.options.onShare?.(this._createItem(platform));
+						if (platform === 'copy-link') {
+							navigator.clipboard.writeText(url)
+								.then(() => {
+									const span = btn.querySelector('span');
+									const originalText = span.textContent;
+									span.textContent = 'Link Copied!';
+									setTimeout(() => {
+										span.textContent = originalText;
+									}, 2000);
+								})
+								.catch((err) => {
+									console.error('Failed to copy:', err);
+								});
+						}
 					} else {
 						switch (platform) {
 							case 'facebook':

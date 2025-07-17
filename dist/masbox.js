@@ -1,219 +1,223 @@
-var __defProp = Object.defineProperty;
+(function(global, factory) {
+  typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.Masbox = {}));
+})(this, function(exports2) {
+  "use strict";var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-const _Masbox = class _Masbox {
-  static bind(selector, options = {}) {
-    document.querySelectorAll(selector).forEach((el) => {
-      const group = el.dataset.masbox || "__masbox-single__";
-      el.dataset.masbox = group;
-      const exists = _Masbox.bindings.find((b) => b.group === group);
-      if (!exists) {
-        _Masbox.bindings.push({ group, selector, options });
-      }
-      if (!el.querySelector(".masbox-zoom-icon") && options.fullscreenIcon !== false) {
-        const icon = document.createElement("span");
-        const size = options.fullscreenIconSize || "30px";
-        icon.className = "masbox-zoom-icon";
-        icon.innerHTML = `
+
+  const _Masbox = class _Masbox {
+    static bind(selector, options = {}) {
+      document.querySelectorAll(selector).forEach((el) => {
+        const group = el.dataset.masbox || "__masbox-single__";
+        el.dataset.masbox = group;
+        const exists = _Masbox.bindings.find((b) => b.group === group);
+        if (!exists) {
+          _Masbox.bindings.push({ group, selector, options });
+        }
+        if (!el.querySelector(".masbox-zoom-icon") && options.fullscreenIcon !== false) {
+          const icon = document.createElement("span");
+          const size = options.fullscreenIconSize || "30px";
+          icon.className = "masbox-zoom-icon";
+          icon.innerHTML = `
 					<svg class="fullscreen" width="${parseInt(size)}" height="${parseInt(size)}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="none">
 						<path d="M1 7.25V3.5a2.5 2.5 0 0 1 2.5-2.5H7.25M21 14.75V18.5a2.5 2.5 0 0 1-2.5 2.5H14.75M14.75 1H18.5a2.5 2.5 0 0 1 2.5 2.5V7.25M7.25 21H3.5a2.5 2.5 0 0 1-2.5-2.5V14.75" 
 						stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
 					</svg>
 				`;
-        el.classList.add("masbox-has-icon");
-        el.appendChild(icon);
-        if (options.fullscreenIconTimer) {
-          requestAnimationFrame(() => {
-            icon.style.opacity = "1";
-          });
-          setTimeout(() => {
-            icon.style.opacity = "0";
-          }, 2e3);
+          el.classList.add("masbox-has-icon");
+          el.appendChild(icon);
+          if (options.fullscreenIconTimer) {
+            requestAnimationFrame(() => {
+              icon.style.opacity = "1";
+            });
+            setTimeout(() => {
+              icon.style.opacity = "0";
+            }, 2e3);
+          }
         }
-      }
-      el.addEventListener("click", (e) => {
-        var _a;
-        e.preventDefault();
-        const gallery = [...document.querySelectorAll(`[data-masbox="${group}"]`)];
-        const index = gallery.indexOf(el);
-        const config = ((_a = _Masbox.bindings.find((b) => b.group === group)) == null ? void 0 : _a.options) ?? {};
-        new _Masbox(gallery, index, config).open();
-      });
-    });
-  }
-  constructor(gallery, index = 0, options = {}) {
-    this.gallery = gallery;
-    this.currentIndex = index;
-    this.options = {
-      loop: true,
-      thumbnails: true,
-      zoom: true,
-      caption: true,
-      fullscreen: true,
-      fullscreenIcon: true,
-      fullscreenIconTimer: true,
-      share: true,
-      minZoom: 0.5,
-      maxZoom: 3,
-      flip: true,
-      rotate: true,
-      ...options
-    };
-    this.zoom = 1;
-    this.imageEl = null;
-    this.overlay = null;
-    this.isDragging = false;
-    this.lastX = 0;
-    this.lastY = 0;
-    this.offsetX = 0;
-    this.offsetY = 0;
-    this.thumbnails = null;
-    this.captionEl = null;
-    this.paginationEl = null;
-    this.transform = {
-      rotate: 0,
-      flipH: 1,
-      flipV: 1
-    };
-    this.hasZoomed = false;
-  }
-  _createItem(platform = null) {
-    var _a, _b, _c;
-    const linkEl = (_a = this.gallery) == null ? void 0 : _a[this.currentIndex];
-    const image = ((_b = this.imageEl) == null ? void 0 : _b.src) || (linkEl == null ? void 0 : linkEl.href) || "";
-    const caption = ((_c = this.captionEl) == null ? void 0 : _c.textContent) || (linkEl == null ? void 0 : linkEl.dataset.caption) || "";
-    const url = window.location.href;
-    const item = { image, caption, url };
-    if (platform) item.platform = platform;
-    return item;
-  }
-  updateImageMaxHeight() {
-    var _a, _b;
-    let deduction = 0;
-    if (this.options.caption && ((_a = this.captionEl) == null ? void 0 : _a.offsetHeight)) {
-      deduction += this.captionEl.offsetHeight;
-    }
-    if (this.options.thumbnails && ((_b = this.thumbnails) == null ? void 0 : _b.offsetHeight)) {
-      deduction += this.thumbnails.offsetHeight;
-    }
-    this.overlay.querySelector(".masbox-viewer").style.maxHeight = `calc(100% - ${deduction + 80}px)`;
-  }
-  handleKeydown(e) {
-    if (!this.isOpen) return;
-    switch (e.key) {
-      case "ArrowRight":
-        this.navigate(1);
-        break;
-      case "ArrowLeft":
-        this.navigate(-1);
-        break;
-      case "Escape":
-        this.close();
-        break;
-    }
-  }
-  async open() {
-    var _a, _b;
-    this.isOpen = true;
-    this.buildOverlay();
-    document.body.appendChild(this.overlay);
-    document.body.style.overflow = "hidden";
-    await this.animateOpen();
-    this.showImage();
-    this._onClickOutside = (e) => {
-      const viewer = this.overlay.querySelector(".masbox-viewer");
-      const shareMenu = this.overlay.querySelector(".masbox-dropdown-menu");
-      const allowedSelectors = [
-        ".masbox-image",
-        ".masbox-toolbar",
-        ".masbox-nav",
-        ".masbox-thumbnails",
-        ".masbox-caption",
-        ".masbox-dropdown-menu",
-        ".masbox-toolbar-action.share"
-      ];
-      const clickedInside = allowedSelectors.some(
-        (selector) => e.target.closest(selector)
-      );
-      const isShareMenuVisible = shareMenu && shareMenu.style.display !== "none";
-      const clickedOnShareMenu = e.target.closest(".masbox-dropdown-menu");
-      const clickedOnShareButton = e.target.closest(".masbox-toolbar-action.share");
-      if (isShareMenuVisible && !clickedOnShareMenu && !clickedOnShareButton) {
-        shareMenu.style.display = "none";
-        return;
-      }
-      if (!clickedInside && viewer && viewer.contains(e.target)) {
-        this.close();
-      }
-    };
-    document.addEventListener("click", this._onClickOutside);
-    requestAnimationFrame(() => {
-      this.updateImageMaxHeight();
-    });
-    this.hasZoomed = false;
-    (_b = (_a = this.options).onOpen) == null ? void 0 : _b.call(_a, this._createItem());
-    document.addEventListener("keydown", this.handleKeydownBound = this.handleKeydown.bind(this));
-  }
-  getViewerRect() {
-    const viewer = this.overlay.querySelector(".masbox-viewer");
-    return viewer.getBoundingClientRect();
-  }
-  animateOpen() {
-    return new Promise((resolve) => {
-      this.overlay.classList.add("masbox--fade");
-      requestAnimationFrame(() => {
-        this.overlay.classList.add("masbox--open");
-      });
-      this.overlay.addEventListener("transitionend", () => {
-        resolve();
-      }, { once: true });
-    });
-  }
-  animateClose() {
-    return new Promise((resolve) => {
-      this.overlay.classList.remove("masbox--open");
-      this.overlay.addEventListener("transitionend", () => {
-        resolve();
-      }, { once: true });
-    });
-  }
-  async close() {
-    var _a, _b, _c;
-    this.isOpen = false;
-    if (document.fullscreenElement === this.overlay) {
-      await document.exitFullscreen().catch(() => {
+        el.addEventListener("click", (e) => {
+          var _a;
+          e.preventDefault();
+          const gallery = [...document.querySelectorAll(`[data-masbox="${group}"]`)];
+          const index = gallery.indexOf(el);
+          const config = ((_a = _Masbox.bindings.find((b) => b.group === group)) == null ? void 0 : _a.options) ?? {};
+          new _Masbox(gallery, index, config).open();
+        });
       });
     }
-    await this.animateClose();
-    if ((_a = this.overlay) == null ? void 0 : _a.parentElement) {
-      document.body.removeChild(this.overlay);
+    constructor(gallery, index = 0, options = {}) {
+      this.gallery = gallery;
+      this.currentIndex = index;
+      this.options = {
+        loop: true,
+        thumbnails: true,
+        zoom: true,
+        caption: true,
+        fullscreen: true,
+        fullscreenIcon: true,
+        fullscreenIconTimer: true,
+        share: true,
+        minZoom: 0.5,
+        maxZoom: 3,
+        flip: true,
+        rotate: true,
+        ...options
+      };
+      this.zoom = 1;
+      this.imageEl = null;
       this.overlay = null;
+      this.isDragging = false;
+      this.lastX = 0;
+      this.lastY = 0;
+      this.offsetX = 0;
+      this.offsetY = 0;
+      this.thumbnails = null;
+      this.captionEl = null;
+      this.paginationEl = null;
+      this.transform = {
+        rotate: 0,
+        flipH: 1,
+        flipV: 1
+      };
+      this.hasZoomed = false;
     }
-    document.body.style.overflow = "";
-    if (this._onClickOutside) {
-      document.removeEventListener("click", this._onClickOutside);
-      this._onClickOutside = null;
+    _createItem(platform = null) {
+      var _a, _b, _c;
+      const linkEl = (_a = this.gallery) == null ? void 0 : _a[this.currentIndex];
+      const image = ((_b = this.imageEl) == null ? void 0 : _b.src) || (linkEl == null ? void 0 : linkEl.href) || "";
+      const caption = ((_c = this.captionEl) == null ? void 0 : _c.textContent) || (linkEl == null ? void 0 : linkEl.dataset.caption) || "";
+      const url = window.location.href;
+      const item = { image, caption, url };
+      if (platform) item.platform = platform;
+      return item;
     }
-    (_c = (_b = this.options).onClose) == null ? void 0 : _c.call(_b, this._createItem());
-    document.removeEventListener("keydown", this.handleKeydownBound);
-  }
-  buildOverlay() {
-    var _a, _b, _c, _d;
-    this.overlay = document.createElement("div");
-    this.overlay.className = "masbox";
-    const inner = document.createElement("div");
-    inner.className = "masbox-inner";
-    const toolbar = document.createElement("div");
-    toolbar.className = "masbox-toolbar";
-    const toolbarLeft = document.createElement("div");
-    const toolbarCenter = document.createElement("div");
-    const toolbarRight = document.createElement("div");
-    toolbarLeft.className = "masbox-toolbar-group left";
-    toolbarCenter.className = "masbox-toolbar-group center";
-    toolbarRight.className = "masbox-toolbar-group right";
-    toolbarLeft.innerHTML += `<span class="masbox-toolbar-pagination pagination"></span>`;
-    if (this.options.zoom) {
-      toolbarCenter.innerHTML += `
+    updateImageMaxHeight() {
+      var _a, _b;
+      let deduction = 0;
+      if (this.options.caption && ((_a = this.captionEl) == null ? void 0 : _a.offsetHeight)) {
+        deduction += this.captionEl.offsetHeight;
+      }
+      if (this.options.thumbnails && ((_b = this.thumbnails) == null ? void 0 : _b.offsetHeight)) {
+        deduction += this.thumbnails.offsetHeight;
+      }
+      this.overlay.querySelector(".masbox-viewer").style.maxHeight = `calc(100% - ${deduction + 80}px)`;
+    }
+    handleKeydown(e) {
+      if (!this.isOpen) return;
+      switch (e.key) {
+        case "ArrowRight":
+          this.navigate(1);
+          break;
+        case "ArrowLeft":
+          this.navigate(-1);
+          break;
+        case "Escape":
+          this.close();
+          break;
+      }
+    }
+    async open() {
+      var _a, _b;
+      this.isOpen = true;
+      this.buildOverlay();
+      document.body.appendChild(this.overlay);
+      document.body.style.overflow = "hidden";
+      await this.animateOpen();
+      this.showImage();
+      this._onClickOutside = (e) => {
+        const viewer = this.overlay.querySelector(".masbox-viewer");
+        const shareMenu = this.overlay.querySelector(".masbox-dropdown-menu");
+        const allowedSelectors = [
+          ".masbox-image",
+          ".masbox-toolbar",
+          ".masbox-nav",
+          ".masbox-thumbnails",
+          ".masbox-caption",
+          ".masbox-dropdown-menu",
+          ".masbox-toolbar-action.share"
+        ];
+        const clickedInside = allowedSelectors.some(
+          (selector) => e.target.closest(selector)
+        );
+        const isShareMenuVisible = shareMenu && shareMenu.style.display !== "none";
+        const clickedOnShareMenu = e.target.closest(".masbox-dropdown-menu");
+        const clickedOnShareButton = e.target.closest(".masbox-toolbar-action.share");
+        if (isShareMenuVisible && !clickedOnShareMenu && !clickedOnShareButton) {
+          shareMenu.style.display = "none";
+          return;
+        }
+        if (!clickedInside && viewer && viewer.contains(e.target)) {
+          this.close();
+        }
+      };
+      document.addEventListener("click", this._onClickOutside);
+      requestAnimationFrame(() => {
+        this.updateImageMaxHeight();
+      });
+      this.hasZoomed = false;
+      (_b = (_a = this.options).onOpen) == null ? void 0 : _b.call(_a, this._createItem());
+      document.addEventListener("keydown", this.handleKeydownBound = this.handleKeydown.bind(this));
+    }
+    getViewerRect() {
+      const viewer = this.overlay.querySelector(".masbox-viewer");
+      return viewer.getBoundingClientRect();
+    }
+    animateOpen() {
+      return new Promise((resolve) => {
+        this.overlay.classList.add("masbox--fade");
+        requestAnimationFrame(() => {
+          this.overlay.classList.add("masbox--open");
+        });
+        this.overlay.addEventListener("transitionend", () => {
+          resolve();
+        }, { once: true });
+      });
+    }
+    animateClose() {
+      return new Promise((resolve) => {
+        this.overlay.classList.remove("masbox--open");
+        this.overlay.addEventListener("transitionend", () => {
+          resolve();
+        }, { once: true });
+      });
+    }
+    async close() {
+      var _a, _b, _c;
+      this.isOpen = false;
+      if (document.fullscreenElement === this.overlay) {
+        await document.exitFullscreen().catch(() => {
+        });
+      }
+      await this.animateClose();
+      if ((_a = this.overlay) == null ? void 0 : _a.parentElement) {
+        document.body.removeChild(this.overlay);
+        this.overlay = null;
+      }
+      document.body.style.overflow = "";
+      if (this._onClickOutside) {
+        document.removeEventListener("click", this._onClickOutside);
+        this._onClickOutside = null;
+      }
+      (_c = (_b = this.options).onClose) == null ? void 0 : _c.call(_b, this._createItem());
+      document.removeEventListener("keydown", this.handleKeydownBound);
+    }
+    buildOverlay() {
+      var _a, _b, _c, _d;
+      this.overlay = document.createElement("div");
+      this.overlay.className = "masbox";
+      const inner = document.createElement("div");
+      inner.className = "masbox-inner";
+      const toolbar = document.createElement("div");
+      toolbar.className = "masbox-toolbar";
+      const toolbarLeft = document.createElement("div");
+      const toolbarCenter = document.createElement("div");
+      const toolbarRight = document.createElement("div");
+      toolbarLeft.className = "masbox-toolbar-group left";
+      toolbarCenter.className = "masbox-toolbar-group center";
+      toolbarRight.className = "masbox-toolbar-group right";
+      toolbarLeft.innerHTML += `<span class="masbox-toolbar-pagination pagination"></span>`;
+      if (this.options.zoom) {
+        toolbarCenter.innerHTML += `
 				<button class="masbox-toolbar-action zoom-in">
 					<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 						<path d="M12.14 7.86a.715.715 0 0 0-.71-.72H8.57V4.29a.714.714 0 0 0-1.43 0v2.85H4.28a.714.714 0 0 0 0 1.43h2.85v2.86a.714.714 0 0 0 1.43 0V8.57h2.86a.715.715 0 0 0 .71-.71ZM7.86 0a7.86 7.86 0 0 1 6.03 12.89l5.9 5.89a.715.715 0 0 1-1.01 1.01l-5.89-5.9a7.86 7.86 0 1 1-5.03-13.9Zm0 1.43a6.43 6.43 0 1 0 0 12.86 6.43 6.43 0 0 0 0-12.86Z"/>
@@ -231,9 +235,9 @@ const _Masbox = class _Masbox {
 					</svg>
 				</button>
 			`;
-    }
-    if (this.options.flip) {
-      toolbarCenter.innerHTML += `
+      }
+      if (this.options.flip) {
+        toolbarCenter.innerHTML += `
 				<button class="masbox-toolbar-action flip-vertical">
 					<svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
 					<path d="M1 11H2.53846M5.61538 11H7.15385M10.2308 11H11.7692M14.8462 11H16.3846M19.4615 11H21M4.84615 21L11 14.8462L17.1538 21H4.84615ZM4.84615 1L11 7.15385L17.1538 1H4.84615Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
@@ -245,9 +249,9 @@ const _Masbox = class _Masbox {
 					</svg>
 				</button>
 			`;
-    }
-    if (this.options.rotate) {
-      toolbarCenter.innerHTML += `
+      }
+      if (this.options.rotate) {
+        toolbarCenter.innerHTML += `
 				<button class="masbox-toolbar-action rotate">
 					<svg viewBox="0 0 15 22" xmlns="http://www.w3.org/2000/svg">
 						<path d="M14.7801 2.4149L12.5302 0.215099C12.4253 0.112427 12.2917 0.0424898 12.1461 0.0141484C12.0006 -0.014193 11.8497 0.000324438 11.7126 0.055875C11.5755 0.111425 11.4583 0.205503 11.3759 0.326199C11.2935 0.446894 11.2496 0.588782 11.2497 0.733898V2.20046H3.00035C2.40366 2.20046 1.83141 2.43223 1.40949 2.84479C0.987565 3.25735 0.750531 3.8169 0.750531 4.40035V13.1999C0.750531 13.3944 0.829543 13.5809 0.970184 13.7184C1.11083 13.8559 1.30158 13.9332 1.50047 13.9332C1.69937 13.9332 1.89012 13.8559 2.03076 13.7184C2.1714 13.5809 2.25041 13.3944 2.25041 13.1999V4.40035C2.25041 4.20586 2.32942 4.01935 2.47007 3.88183C2.61071 3.74431 2.80146 3.66705 3.00035 3.66705H11.2497V5.13364C11.2496 5.27875 11.2935 5.42064 11.3759 5.54134C11.4583 5.66203 11.5755 5.75611 11.7126 5.81166C11.8497 5.86721 12.0006 5.88173 12.1461 5.85339C12.2917 5.82505 12.4253 5.75511 12.5302 5.65245L14.7801 3.45256C14.8498 3.38446 14.9051 3.30359 14.9428 3.21456C14.9806 3.12554 15 3.03012 15 2.93376C15 2.83739 14.9806 2.74197 14.9428 2.65295C14.9051 2.56393 14.8498 2.48305 14.7801 2.4149ZM3.00035 16.1331C3.19925 16.1331 3.39 16.2103 3.53064 16.3478C3.67128 16.4854 3.7503 16.6719 3.7503 16.8664V18.333H11.9996C12.1985 18.333 12.3893 18.2557 12.5299 18.1182C12.6706 17.9807 12.7496 17.7941 12.7496 17.5997V8.80012C12.7496 8.60563 12.8286 8.41912 12.9692 8.2816C13.1099 8.14408 13.3006 8.06682 13.4995 8.06682C13.6984 8.06682 13.8892 8.14408 14.0298 8.2816C14.1705 8.41912 14.2495 8.60563 14.2495 8.80012V17.5997C14.2495 18.1831 14.0124 18.7426 13.5905 19.1552C13.1686 19.5678 12.5963 19.7995 11.9996 19.7995H3.7503V21.2661C3.75041 21.4112 3.70649 21.5531 3.6241 21.6738C3.5417 21.7945 3.42453 21.8886 3.28742 21.9441C3.15032 21.9997 2.99944 22.0142 2.85389 21.9859C2.70833 21.9575 2.57465 21.8876 2.46977 21.7849L0.219948 19.5851C0.150221 19.5169 0.0949061 19.4361 0.0571659 19.3471C0.0194256 19.258 0 19.1626 0 19.0662C0 18.9699 0.0194256 18.8745 0.0571659 18.7854C0.0949061 18.6964 0.150221 18.6155 0.219948 18.5474L2.46977 16.3476C2.53947 16.2795 2.6222 16.2255 2.71324 16.1887C2.80428 16.1519 2.90184 16.133 3.00035 16.1331Z"
@@ -255,9 +259,9 @@ const _Masbox = class _Masbox {
 					</svg>
 				</button>
 			`;
-    }
-    if (this.options.share) {
-      toolbarRight.innerHTML += `
+      }
+      if (this.options.share) {
+        toolbarRight.innerHTML += `
 				<div class="masbox-dropdown">
 					<button class="masbox-toolbar-action share">
 						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="currentColor">
@@ -320,41 +324,41 @@ const _Masbox = class _Masbox {
 
 				</div>
 			`;
-    }
-    if (this.options.thumbnails) {
-      toolbarRight.innerHTML += `<button class="masbox-toolbar-action thumbnails">
+      }
+      if (this.options.thumbnails) {
+        toolbarRight.innerHTML += `<button class="masbox-toolbar-action thumbnails">
 				<svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" fill="none">
 					<path d="M18.78 1H3.22C1.99 1 1 1.99 1 3.22v11.11c0 1.23.99 2.22 2.22 2.22h15.56c1.23 0 2.22-.99 2.22-2.22V3.22C21 1.99 20.01 1 18.78 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 					<path d="M2.11 21h1.11M7.67 21h1.11M13.22 21h1.11M18.78 21h1.11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>`;
-    }
-    if (this.options.fullscreen) {
-      toolbarRight.innerHTML += `<button class="masbox-toolbar-action fullscreen">
+      }
+      if (this.options.fullscreen) {
+        toolbarRight.innerHTML += `<button class="masbox-toolbar-action fullscreen">
 				<svg class="fullscreen" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="none">
 					<path d="M1 7.25V3.5a2.5 2.5 0 0 1 2.5-2.5H7.25M21 14.75V18.5a2.5 2.5 0 0 1-2.5 2.5H14.75M14.75 1H18.5a2.5 2.5 0 0 1 2.5 2.5V7.25M7.25 21H3.5a2.5 2.5 0 0 1-2.5-2.5V14.75" 
 					stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>`;
-    }
-    toolbarRight.innerHTML += `<button class="masbox-toolbar-action close">
+      }
+      toolbarRight.innerHTML += `<button class="masbox-toolbar-action close">
 			<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none">
   				<path d="M21 21L1 1M21 1L1 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 			</svg>
 		</button>`;
-    toolbar.appendChild(toolbarLeft);
-    toolbar.appendChild(toolbarCenter);
-    toolbar.appendChild(toolbarRight);
-    const viewer = document.createElement("div");
-    viewer.className = "masbox-viewer";
-    const image = document.createElement("img");
-    image.className = "masbox-image";
-    viewer.appendChild(image);
-    const caption = document.createElement("div");
-    caption.className = "masbox-caption";
-    const nav = document.createElement("div");
-    nav.className = "masbox-navigation";
-    nav.innerHTML = `
+      toolbar.appendChild(toolbarLeft);
+      toolbar.appendChild(toolbarCenter);
+      toolbar.appendChild(toolbarRight);
+      const viewer = document.createElement("div");
+      viewer.className = "masbox-viewer";
+      const image = document.createElement("img");
+      image.className = "masbox-image";
+      viewer.appendChild(image);
+      const caption = document.createElement("div");
+      caption.className = "masbox-caption";
+      const nav = document.createElement("div");
+      nav.className = "masbox-navigation";
+      nav.innerHTML = `
 			<button class="prev">
 				<svg xmlns="http://www.w3.org/2000/svg" width="11" height="20" viewBox="0 0 11 20" fill="none">
 					<path d="M10.2 0a.7.7 0 0 1 .5 1.2L2.3 10l8.4 8.8a.7.7 0 1 1-1 1L.8 10.6a.7.7 0 0 1 0-1.2L9.7.2A.7.7 0 0 1 10.2 0Z" fill="white"/>
@@ -366,349 +370,360 @@ const _Masbox = class _Masbox {
 				</svg>
 			</button>
 		`;
-    const thumbs = document.createElement("div");
-    thumbs.className = "masbox-thumbnails";
-    this.loaderEl = document.createElement("div");
-    this.loaderEl.className = "masbox-loader";
-    this.loaderEl.hidden = true;
-    if (this.gallery.length > 1) {
-      inner.append(toolbar, viewer, nav, this.loaderEl);
-    } else {
-      inner.append(toolbar, viewer, this.loaderEl);
-    }
-    if (this.options.caption) inner.append(caption);
-    if (this.options.thumbnails) inner.append(thumbs);
-    this.overlay.append(inner);
-    toolbar.querySelector(".close").onclick = () => this.close();
-    if (this.options.zoom) {
-      toolbar.querySelector(".zoom-in").onclick = () => this.changeZoom(0.25);
-      toolbar.querySelector(".zoom-out").onclick = () => this.changeZoom(-0.25);
-      toolbar.querySelector(".reset").onclick = () => this.resetZoom();
-    }
-    if (this.options.fullscreen) {
-      toolbar.querySelector(".fullscreen").onclick = () => {
-        if (!document.fullscreenElement) {
-          this.overlay.requestFullscreen();
-        } else {
-          document.exitFullscreen();
-        }
-      };
-    }
-    if (this.options.flip) {
-      (_a = toolbar.querySelector(".flip-horizontal")) == null ? void 0 : _a.addEventListener("click", () => {
-        this.transform.flipH *= -1;
-        this.updateTransform();
-      });
-      (_b = toolbar.querySelector(".flip-vertical")) == null ? void 0 : _b.addEventListener("click", () => {
-        this.transform.flipV *= -1;
-        this.updateTransform();
-      });
-    }
-    if (this.options.thumbnails) {
-      (_c = toolbar.querySelector(".thumbnails")) == null ? void 0 : _c.addEventListener("click", () => {
-        this.toggleThumbnails();
-      });
-    }
-    if (this.options.rotate) {
-      (_d = toolbar.querySelector(".rotate")) == null ? void 0 : _d.addEventListener("click", () => {
-        this.transform.rotate += 90;
-        this.updateTransform();
-      });
-    }
-    if (this.options.share) {
-      const shareMenu = toolbar.querySelector(".masbox-dropdown-menu");
-      toolbar.querySelector(".share").onclick = () => {
-        shareMenu.style.display = shareMenu.style.display === "none" ? "block" : "none";
-      };
-      const buttons = shareMenu.querySelectorAll(".share-btn");
-      buttons.forEach((btn) => {
-        const platform = btn.dataset.platform;
-        btn.onclick = (e) => {
-          var _a2, _b2;
-          e.stopPropagation();
-          const current = this.gallery[this.currentIndex];
-          current.dataset.caption || "";
-          current.href || current.src || "";
-          const url = location.href;
-          const item = {};
-          if (typeof this.options.onShare === "function") {
-            (_b2 = (_a2 = this.options).onShare) == null ? void 0 : _b2.call(_a2, this._createItem(platform));
+      const thumbs = document.createElement("div");
+      thumbs.className = "masbox-thumbnails";
+      this.loaderEl = document.createElement("div");
+      this.loaderEl.className = "masbox-loader";
+      this.loaderEl.hidden = true;
+      if (this.gallery.length > 1) {
+        inner.append(toolbar, viewer, nav, this.loaderEl);
+      } else {
+        inner.append(toolbar, viewer, this.loaderEl);
+      }
+      if (this.options.caption) inner.append(caption);
+      if (this.options.thumbnails) inner.append(thumbs);
+      this.overlay.append(inner);
+      toolbar.querySelector(".close").onclick = () => this.close();
+      if (this.options.zoom) {
+        toolbar.querySelector(".zoom-in").onclick = () => this.changeZoom(0.25);
+        toolbar.querySelector(".zoom-out").onclick = () => this.changeZoom(-0.25);
+        toolbar.querySelector(".reset").onclick = () => this.resetZoom();
+      }
+      if (this.options.fullscreen) {
+        toolbar.querySelector(".fullscreen").onclick = () => {
+          if (!document.fullscreenElement) {
+            this.overlay.requestFullscreen();
           } else {
-            switch (platform) {
-              case "facebook":
-                window.open(`https://facebook.com/sharer/sharer.php?u=${url}`, "_blank");
-                break;
-              case "twitter":
-                window.open(`https://twitter.com/intent/tweet?url=${url}`, "_blank");
-                break;
-              case "linkedin":
-                window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${url}`, "_blank");
-                break;
-              case "whatsapp":
-                window.open(`https://wa.me/?text=${url}`, "_blank");
-                break;
-              case "email":
-                window.location.href = `mailto:?subject=Check this out&body=${url}`;
-                break;
-              case "copy-link":
-                navigator.clipboard.writeText(item.href);
-                alert("Link copied!");
-                break;
-              default:
-                console.warn(`No default handler for platform: ${platform}`);
-            }
+            document.exitFullscreen();
           }
         };
-      });
-    }
-    nav.querySelector(".prev").onclick = () => this.navigate(-1);
-    nav.querySelector(".next").onclick = () => this.navigate(1);
-    image.addEventListener("wheel", (e) => this.handleZoomScroll(e));
-    image.addEventListener("mousedown", (e) => this.startDrag(e));
-    window.addEventListener("mousemove", (e) => this.dragImage(e));
-    window.addEventListener("mouseup", () => this.endDrag());
-    image.addEventListener("touchstart", (e) => this.startTouch(e), { passive: false });
-    image.addEventListener("touchmove", (e) => this.handlePinchZoom(e), { passive: false });
-    image.addEventListener("touchend", () => this.endTouch());
-    image.addEventListener("dblclick", (e) => this.toggleTapZoom(e));
-    let lastTap = 0;
-    image.addEventListener("touchend", (e) => {
-      const now = (/* @__PURE__ */ new Date()).getTime();
-      const delta = now - lastTap;
-      if (delta < 300) {
-        this.toggleTapZoom(e);
-        e.preventDefault();
       }
-      lastTap = now;
-    });
-    image.addEventListener("dragstart", (e) => e.preventDefault());
-    this.imageEl = image;
-    this.captionEl = caption;
-    this.paginationEl = toolbar.querySelector(".pagination");
-    this.thumbnails = thumbs;
-  }
-  toggleThumbnails() {
-    const thumbs = this.overlay.querySelector(".masbox-thumbnails");
-    const btn = this.overlay.querySelector(".thumbnails");
-    if (thumbs) {
-      const isHidden = thumbs.classList.toggle("is-hidden");
-      btn == null ? void 0 : btn.classList.toggle("is-active", !isHidden);
-      setTimeout(() => {
-        this.updateImageMaxHeight();
-      }, 300);
+      if (this.options.flip) {
+        (_a = toolbar.querySelector(".flip-horizontal")) == null ? void 0 : _a.addEventListener("click", () => {
+          this.transform.flipH *= -1;
+          this.updateTransform();
+        });
+        (_b = toolbar.querySelector(".flip-vertical")) == null ? void 0 : _b.addEventListener("click", () => {
+          this.transform.flipV *= -1;
+          this.updateTransform();
+        });
+      }
+      if (this.options.thumbnails) {
+        (_c = toolbar.querySelector(".thumbnails")) == null ? void 0 : _c.addEventListener("click", () => {
+          this.toggleThumbnails();
+        });
+      }
+      if (this.options.rotate) {
+        (_d = toolbar.querySelector(".rotate")) == null ? void 0 : _d.addEventListener("click", () => {
+          this.transform.rotate += 90;
+          this.updateTransform();
+        });
+      }
+      if (this.options.share) {
+        const shareMenu = toolbar.querySelector(".masbox-dropdown-menu");
+        toolbar.querySelector(".share").onclick = () => {
+          shareMenu.style.display = shareMenu.style.display === "none" ? "block" : "none";
+        };
+        const buttons = shareMenu.querySelectorAll(".share-btn");
+        buttons.forEach((btn) => {
+          const platform = btn.dataset.platform;
+          btn.onclick = (e) => {
+            var _a2, _b2;
+            e.stopPropagation();
+            const current = this.gallery[this.currentIndex];
+            current.dataset.caption || "";
+            current.href || current.src || "";
+            const url = location.href;
+            if (typeof this.options.onShare === "function") {
+              (_b2 = (_a2 = this.options).onShare) == null ? void 0 : _b2.call(_a2, this._createItem(platform));
+            } else {
+              switch (platform) {
+                case "facebook":
+                  window.open(`https://facebook.com/sharer/sharer.php?u=${url}`, "_blank");
+                  break;
+                case "twitter":
+                  window.open(`https://twitter.com/intent/tweet?url=${url}`, "_blank");
+                  break;
+                case "linkedin":
+                  window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${url}`, "_blank");
+                  break;
+                case "whatsapp":
+                  window.open(`https://wa.me/?text=${url}`, "_blank");
+                  break;
+                case "email":
+                  window.location.href = `mailto:?subject=Check this out&body=${url}`;
+                  break;
+                case "copy-link":
+                  navigator.clipboard.writeText(url).then(() => {
+                    const span = btn.querySelector("span");
+                    const originalText = span.textContent;
+                    span.textContent = "Copied!";
+                    setTimeout(() => {
+                      span.textContent = originalText;
+                    }, 2e3);
+                  }).catch((err) => {
+                    console.error("Failed to copy:", err);
+                  });
+                  break;
+                default:
+                  console.warn(`No default handler for platform: ${platform}`);
+              }
+            }
+          };
+        });
+      }
+      nav.querySelector(".prev").onclick = () => this.navigate(-1);
+      nav.querySelector(".next").onclick = () => this.navigate(1);
+      image.addEventListener("wheel", (e) => this.handleZoomScroll(e));
+      image.addEventListener("mousedown", (e) => this.startDrag(e));
+      window.addEventListener("mousemove", (e) => this.dragImage(e));
+      window.addEventListener("mouseup", () => this.endDrag());
+      image.addEventListener("touchstart", (e) => this.startTouch(e), { passive: false });
+      image.addEventListener("touchmove", (e) => this.handlePinchZoom(e), { passive: false });
+      image.addEventListener("touchend", () => this.endTouch());
+      image.addEventListener("dblclick", (e) => this.toggleTapZoom(e));
+      let lastTap = 0;
+      image.addEventListener("touchend", (e) => {
+        const now = (/* @__PURE__ */ new Date()).getTime();
+        const delta = now - lastTap;
+        if (delta < 300) {
+          this.toggleTapZoom(e);
+          e.preventDefault();
+        }
+        lastTap = now;
+      });
+      image.addEventListener("dragstart", (e) => e.preventDefault());
+      this.imageEl = image;
+      this.captionEl = caption;
+      this.paginationEl = toolbar.querySelector(".pagination");
+      this.thumbnails = thumbs;
     }
-  }
-  updateTransform() {
-    const scale = this.zoom || 1;
-    const rotate = this.transform.rotate;
-    const flipH = this.transform.flipH;
-    const flipV = this.transform.flipV;
-    const offsetX = this.offsetX || 0;
-    const offsetY = this.offsetY || 0;
-    const transform = `
+    toggleThumbnails() {
+      const thumbs = this.overlay.querySelector(".masbox-thumbnails");
+      const btn = this.overlay.querySelector(".thumbnails");
+      if (thumbs) {
+        const isHidden = thumbs.classList.toggle("is-hidden");
+        btn == null ? void 0 : btn.classList.toggle("is-active", !isHidden);
+        setTimeout(() => {
+          this.updateImageMaxHeight();
+        }, 300);
+      }
+    }
+    updateTransform() {
+      const scale = this.zoom || 1;
+      const rotate = this.transform.rotate;
+      const flipH = this.transform.flipH;
+      const flipV = this.transform.flipV;
+      const offsetX = this.offsetX || 0;
+      const offsetY = this.offsetY || 0;
+      const transform = `
 			translate(${offsetX}px, ${offsetY}px)
 			scale(${scale * flipH}, ${scale * flipV})
 			rotate(${rotate}deg)
 		`;
-    this.imageEl.style.transform = transform.trim();
-  }
-  toggleTapZoom(e) {
-    var _a, _b, _c, _d;
-    e.preventDefault();
-    const rect = this.imageEl.getBoundingClientRect();
-    const x = (e.clientX || (((_b = (_a = e.changedTouches) == null ? void 0 : _a[0]) == null ? void 0 : _b.clientX) ?? 0)) - rect.left;
-    const y = (e.clientY || (((_d = (_c = e.changedTouches) == null ? void 0 : _c[0]) == null ? void 0 : _d.clientY) ?? 0)) - rect.top;
-    if (this.zoom === 1) {
-      this.zoom = this.options.maxZoom;
-      this.offsetX = -(x - rect.width / 2);
-      this.offsetY = -(y - rect.height / 2);
-    } else {
-      this.zoom = 1;
-      this.offsetX = 0;
-      this.offsetY = 0;
+      this.imageEl.style.transform = transform.trim();
     }
-    this.setZoom(this.zoom);
-  }
-  showImage() {
-    const current = this.gallery[this.currentIndex];
-    this.loaderEl.hidden = false;
-    this.imageEl.style.opacity = 0;
-    this.imageEl.onload = () => {
-      this.zoom = 1;
-      this.offsetX = 0;
-      this.offsetY = 0;
-      this.imageEl.style.height = "auto";
-      this.imageEl.style.width = "auto";
-      this.loaderEl.hidden = true;
-      this.setZoom(1);
-      this.imageEl.style.opacity = 1;
-    };
-    this.imageEl.src = current.href;
-    if (this.options.caption && this.captionEl)
-      this.captionEl.innerText = current.dataset.caption || "";
-    this.updatePagination();
-    if (this.options.thumbnails) this.renderThumbnails();
-  }
-  renderThumbnails() {
-    this.thumbnails.innerHTML = "";
-    this.gallery.forEach((img, i) => {
-      const thumbWrapper = document.createElement("div");
-      thumbWrapper.className = "masbox-thumbnails-item";
-      const thumb = document.createElement("img");
-      thumb.src = img.dataset.thumb || img.href;
-      if (i === this.currentIndex) thumbWrapper.classList.add("active");
-      thumb.onclick = () => {
-        if (i !== this.currentIndex) {
-          this.currentIndex = i;
-          this.showImage();
-          if (typeof this.options.onMove === "function") {
-            const el = this.gallery[this.currentIndex];
-            const item = {
-              image: el.href,
-              caption: el.dataset.caption || "",
-              url: window.location.href
-            };
-            this.options.onMove(item);
-          }
-        }
-      };
-      thumbWrapper.appendChild(thumb);
-      this.thumbnails.appendChild(thumbWrapper);
-    });
-  }
-  updatePagination() {
-    if (this.paginationEl) {
-      this.paginationEl.innerText = `${this.currentIndex + 1} / ${this.gallery.length}`;
-    }
-  }
-  navigate(step) {
-    var _a, _b;
-    if (this.gallery.length <= 1) return;
-    if (!this.options.loop) {
-      const next = this.currentIndex + step;
-      if (next < 0 || next >= this.gallery.length) return;
-    }
-    this.currentIndex = (this.currentIndex + step + this.gallery.length) % this.gallery.length;
-    this.showImage();
-    this.hasZoomed = false;
-    (_b = (_a = this.options).onMove) == null ? void 0 : _b.call(_a, this._createItem());
-  }
-  changeZoom(delta) {
-    const newZoom = Math.min(
-      this.options.maxZoom,
-      Math.max(this.options.minZoom, this.zoom + delta)
-    );
-    this.zoom = newZoom;
-    this.setZoom(this.zoom);
-  }
-  setZoom(value) {
-    var _a, _b;
-    this.zoom = Math.max(1, Math.min(2, value));
-    const container = this.imageEl.parentElement;
-    const containerRect = container.getBoundingClientRect();
-    const imageWidth = this.imageEl.naturalWidth * this.zoom;
-    const imageHeight = this.imageEl.naturalHeight * this.zoom;
-    const maxOffsetX = Math.max(0, (imageWidth - containerRect.width) / 2);
-    const maxOffsetY = Math.max(0, (imageHeight - containerRect.height) / 2);
-    this.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, this.offsetX));
-    this.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, this.offsetY));
-    const isReset = Math.abs(this.zoom - 1) < 0.01;
-    if (isReset) {
-      this.offsetX = 0;
-      this.offsetY = 0;
-    }
-    this.updateTransform();
-    if (!this.hasZoomed && this.zoom > 1) {
-      this.hasZoomed = true;
-      (_b = (_a = this.options).onZoom) == null ? void 0 : _b.call(_a, this._createItem());
-    }
-  }
-  resetZoom() {
-    this.zoom = 1;
-    this.offsetX = 0;
-    this.offsetY = 0;
-    this.setZoom(1);
-  }
-  handleZoomScroll(event) {
-    event.preventDefault();
-    const rect = this.imageEl.getBoundingClientRect();
-    if (!this.scrollZoomInit) {
-      this.lastScrollX = event.clientX - rect.left;
-      this.lastScrollY = event.clientY - rect.top;
-      this.scrollZoomInit = true;
-      clearTimeout(this.scrollTimeout);
-      this.scrollTimeout = setTimeout(() => {
-        this.scrollZoomInit = false;
-      }, 100);
-    }
-    const delta = -event.deltaY * 5e-4;
-    let newZoom = this.zoom + delta;
-    const zoomRatio = newZoom / this.zoom;
-    this.offsetX -= (this.lastScrollX - rect.width / 2) * (zoomRatio - 1);
-    this.offsetY -= (this.lastScrollY - rect.height / 2) * (zoomRatio - 1);
-    if (Math.abs(newZoom - 1) < 0.01) {
-      this.offsetX = 0;
-      this.offsetY = 0;
-      newZoom = 1;
-    }
-    this.setZoom(newZoom);
-  }
-  startDrag(e) {
-    if (this.zoom <= 1) return;
-    this.isDragging = true;
-    this.hasDragged = false;
-    this.lastX = e.clientX;
-    this.lastY = e.clientY;
-    this.imageEl.style.cursor = "grabbing";
-    this.imageEl.style.transition = "none";
-  }
-  dragImage(e) {
-    if (!this.isDragging) return;
-    const dx = e.clientX - this.lastX;
-    const dy = e.clientY - this.lastY;
-    const movementThreshold = 2;
-    if (Math.abs(dx) > movementThreshold || Math.abs(dy) > movementThreshold) {
-      this.hasDragged = true;
-      this.offsetX += dx;
-      this.offsetY += dy;
-      this.lastX = e.clientX;
-      this.lastY = e.clientY;
+    toggleTapZoom(e) {
+      var _a, _b, _c, _d;
+      e.preventDefault();
+      const rect = this.imageEl.getBoundingClientRect();
+      const x = (e.clientX || (((_b = (_a = e.changedTouches) == null ? void 0 : _a[0]) == null ? void 0 : _b.clientX) ?? 0)) - rect.left;
+      const y = (e.clientY || (((_d = (_c = e.changedTouches) == null ? void 0 : _c[0]) == null ? void 0 : _d.clientY) ?? 0)) - rect.top;
+      if (this.zoom === 1) {
+        this.zoom = this.options.maxZoom;
+        this.offsetX = -(x - rect.width / 2);
+        this.offsetY = -(y - rect.height / 2);
+      } else {
+        this.zoom = 1;
+        this.offsetX = 0;
+        this.offsetY = 0;
+      }
       this.setZoom(this.zoom);
     }
-  }
-  endDrag() {
-    if (!this.isDragging) return;
-    this.isDragging = false;
-    this.imageEl.style.cursor = "grab";
-    this.imageEl.style.transition = "transform 0.3s ease-out";
-    this.setZoom(this.zoom);
-  }
-  startTouch(e) {
-    if (e.touches.length === 2) {
-      this.initialPinchDistance = this.getPinchDistance(e);
-      this.initialZoom = this.zoom;
+    showImage() {
+      var _a;
+      const current = this.gallery[this.currentIndex];
+      this.loaderEl.hidden = false;
+      this.imageEl.style.opacity = 0;
+      this.imageEl.onload = () => {
+        this.zoom = 1;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.imageEl.style.height = "auto";
+        this.imageEl.style.width = "auto";
+        this.loaderEl.hidden = true;
+        this.setZoom(1);
+        this.imageEl.style.opacity = 1;
+      };
+      this.imageEl.src = current.href;
+      if (this.options.caption && this.captionEl) {
+        const rawCaption = ((_a = current.dataset.caption) == null ? void 0 : _a.trim()) || "";
+        const isCaptionValid = rawCaption && !/^[.,\-]+$/.test(rawCaption);
+        this.captionEl.innerText = isCaptionValid ? rawCaption : "";
+      }
+      this.updatePagination();
+      if (this.options.thumbnails) this.renderThumbnails();
     }
-  }
-  handlePinchZoom(e) {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      const currentDistance = this.getPinchDistance(e);
-      const scaleFactor = currentDistance / this.initialPinchDistance;
-      this.setZoom(this.initialZoom * scaleFactor);
+    renderThumbnails() {
+      this.thumbnails.innerHTML = "";
+      this.gallery.forEach((img, i) => {
+        const thumbWrapper = document.createElement("div");
+        thumbWrapper.className = "masbox-thumbnails-item";
+        const thumb = document.createElement("img");
+        thumb.src = img.dataset.thumb || img.href;
+        if (i === this.currentIndex) thumbWrapper.classList.add("active");
+        thumb.onclick = () => {
+          if (i !== this.currentIndex) {
+            this.currentIndex = i;
+            this.showImage();
+            if (typeof this.options.onMove === "function") {
+              const el = this.gallery[this.currentIndex];
+              const item = {
+                image: el.href,
+                caption: el.dataset.caption || "",
+                url: window.location.href
+              };
+              this.options.onMove(item);
+            }
+          }
+        };
+        thumbWrapper.appendChild(thumb);
+        this.thumbnails.appendChild(thumbWrapper);
+      });
     }
-  }
-  endTouch() {
-    this.initialPinchDistance = null;
-  }
-  getPinchDistance(e) {
-    const dx = e.touches[0].clientX - e.touches[1].clientX;
-    const dy = e.touches[0].clientY - e.touches[1].clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-};
-__publicField(_Masbox, "bindings", []);
-let Masbox = _Masbox;
-document.addEventListener("DOMContentLoaded", () => new Masbox());
-export {
-  Masbox as default
-};
+    updatePagination() {
+      if (this.paginationEl) {
+        this.paginationEl.innerText = `${this.currentIndex + 1} / ${this.gallery.length}`;
+      }
+    }
+    navigate(step) {
+      var _a, _b;
+      if (this.gallery.length <= 1) return;
+      if (!this.options.loop) {
+        const next = this.currentIndex + step;
+        if (next < 0 || next >= this.gallery.length) return;
+      }
+      this.currentIndex = (this.currentIndex + step + this.gallery.length) % this.gallery.length;
+      this.showImage();
+      this.hasZoomed = false;
+      (_b = (_a = this.options).onMove) == null ? void 0 : _b.call(_a, this._createItem());
+    }
+    changeZoom(delta) {
+      const newZoom = Math.min(
+        this.options.maxZoom,
+        Math.max(this.options.minZoom, this.zoom + delta)
+      );
+      this.zoom = newZoom;
+      this.setZoom(this.zoom);
+    }
+    setZoom(value) {
+      var _a, _b;
+      this.zoom = Math.max(1, Math.min(2, value));
+      const container = this.imageEl.parentElement;
+      const containerRect = container.getBoundingClientRect();
+      const imageWidth = this.imageEl.naturalWidth * this.zoom;
+      const imageHeight = this.imageEl.naturalHeight * this.zoom;
+      const maxOffsetX = Math.max(0, (imageWidth - containerRect.width) / 2);
+      const maxOffsetY = Math.max(0, (imageHeight - containerRect.height) / 2);
+      this.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, this.offsetX));
+      this.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, this.offsetY));
+      const isReset = Math.abs(this.zoom - 1) < 0.01;
+      if (isReset) {
+        this.offsetX = 0;
+        this.offsetY = 0;
+      }
+      this.updateTransform();
+      if (!this.hasZoomed && this.zoom > 1) {
+        this.hasZoomed = true;
+        (_b = (_a = this.options).onZoom) == null ? void 0 : _b.call(_a, this._createItem());
+      }
+    }
+    resetZoom() {
+      this.zoom = 1;
+      this.offsetX = 0;
+      this.offsetY = 0;
+      this.setZoom(1);
+    }
+    handleZoomScroll(event) {
+      event.preventDefault();
+      const rect = this.imageEl.getBoundingClientRect();
+      if (!this.scrollZoomInit) {
+        this.lastScrollX = event.clientX - rect.left;
+        this.lastScrollY = event.clientY - rect.top;
+        this.scrollZoomInit = true;
+        clearTimeout(this.scrollTimeout);
+        this.scrollTimeout = setTimeout(() => {
+          this.scrollZoomInit = false;
+        }, 100);
+      }
+      const delta = -event.deltaY * 5e-4;
+      let newZoom = this.zoom + delta;
+      const zoomRatio = newZoom / this.zoom;
+      this.offsetX -= (this.lastScrollX - rect.width / 2) * (zoomRatio - 1);
+      this.offsetY -= (this.lastScrollY - rect.height / 2) * (zoomRatio - 1);
+      if (Math.abs(newZoom - 1) < 0.01) {
+        this.offsetX = 0;
+        this.offsetY = 0;
+        newZoom = 1;
+      }
+      this.setZoom(newZoom);
+    }
+    startDrag(e) {
+      if (this.zoom <= 1) return;
+      this.isDragging = true;
+      this.hasDragged = false;
+      this.lastX = e.clientX;
+      this.lastY = e.clientY;
+      this.imageEl.style.cursor = "grabbing";
+      this.imageEl.style.transition = "none";
+    }
+    dragImage(e) {
+      if (!this.isDragging) return;
+      const dx = e.clientX - this.lastX;
+      const dy = e.clientY - this.lastY;
+      const movementThreshold = 2;
+      if (Math.abs(dx) > movementThreshold || Math.abs(dy) > movementThreshold) {
+        this.hasDragged = true;
+        this.offsetX += dx;
+        this.offsetY += dy;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+        this.setZoom(this.zoom);
+      }
+    }
+    endDrag() {
+      if (!this.isDragging) return;
+      this.isDragging = false;
+      this.imageEl.style.cursor = "grab";
+      this.imageEl.style.transition = "transform 0.3s ease-out";
+      this.setZoom(this.zoom);
+    }
+    startTouch(e) {
+      if (e.touches.length === 2) {
+        this.initialPinchDistance = this.getPinchDistance(e);
+        this.initialZoom = this.zoom;
+      }
+    }
+    handlePinchZoom(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const currentDistance = this.getPinchDistance(e);
+        const scaleFactor = currentDistance / this.initialPinchDistance;
+        this.setZoom(this.initialZoom * scaleFactor);
+      }
+    }
+    endTouch() {
+      this.initialPinchDistance = null;
+    }
+    getPinchDistance(e) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+  };
+  __publicField(_Masbox, "bindings", []);
+  let Masbox = _Masbox;
+  document.addEventListener("DOMContentLoaded", () => new Masbox());
+  exports2.default = Masbox;
+  Object.defineProperties(exports2, { __esModule: { value: true }, [Symbol.toStringTag]: { value: "Module" } });
+});

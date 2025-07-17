@@ -353,8 +353,7 @@ class Masbox {
 								<path d="M7.25 14.75L14.75 7.25M9.75 3.5l.58-.67a7 7 0 0 1 9.84 9.84l-.67.58M12.25 18.5l-.5.67a7 7 0 0 1-9.2-10.34l.67-.58" 
 								stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 							</svg>
-
-							Copy Link
+							<span>Copy Link</span>
 						</button>
 						</div>
 
@@ -503,6 +502,20 @@ class Masbox {
 
 					if (typeof this.options.onShare === 'function') {
 						this.options.onShare?.(this._createItem(platform));
+						if (platform === 'copy-link') {
+							navigator.clipboard.writeText(url)
+								.then(() => {
+									const span = btn.querySelector('span');
+									const originalText = span.textContent;
+									span.textContent = 'Link Copied!';
+									setTimeout(() => {
+										span.textContent = originalText;
+									}, 2000);
+								})
+								.catch((err) => {
+									console.error('Failed to copy:', err);
+								});
+						}
 					} else {
 						switch (platform) {
 							case 'facebook':
@@ -521,8 +534,17 @@ class Masbox {
 								window.location.href = `mailto:?subject=Check this out&body=${url}`;
 							break;
 							case 'copy-link':
-								navigator.clipboard.writeText(item.href);
-								alert('Link copied!');
+								navigator.clipboard.writeText(url).then(() => {
+									console.log('copied');
+									const span = btn.querySelector('span');
+									const originalText = span.textContent;
+									span.textContent = 'Copied!';
+									setTimeout(() => {
+										span.textContent = originalText;
+									}, 2000);
+								}).catch((err) => {
+									console.error('Failed to copy:', err);
+								});
 							break;
 							default:
 								console.warn(`No default handler for platform: ${platform}`);
@@ -633,8 +655,12 @@ class Masbox {
 		};
 	
 		this.imageEl.src = current.href;
-		if (this.options.caption && this.captionEl)
-		  this.captionEl.innerText = current.dataset.caption || '';
+		if (this.options.caption && this.captionEl) {
+			const rawCaption = current.dataset.caption?.trim() || '';
+			const isCaptionValid = rawCaption && !/^[.,\-]+$/.test(rawCaption);
+
+			this.captionEl.innerText = isCaptionValid ? rawCaption : '';
+		}
 	
 		this.updatePagination();
 		if (this.options.thumbnails) this.renderThumbnails();

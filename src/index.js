@@ -521,8 +521,16 @@ class Masbox {
 								window.location.href = `mailto:?subject=Check this out&body=${url}`;
 							break;
 							case 'copy-link':
-								navigator.clipboard.writeText(item.href);
-								alert('Link copied!');
+								navigator.clipboard.writeText(url).then(() => {
+									const span = btn.querySelector('span');
+									const originalText = span.textContent;
+									span.textContent = 'Copied!';
+									setTimeout(() => {
+										span.textContent = originalText;
+									}, 2000);
+								}).catch((err) => {
+									console.error('Failed to copy:', err);
+								});
 							break;
 							default:
 								console.warn(`No default handler for platform: ${platform}`);
@@ -633,8 +641,12 @@ class Masbox {
 		};
 	
 		this.imageEl.src = current.href;
-		if (this.options.caption && this.captionEl)
-		  this.captionEl.innerText = current.dataset.caption || '';
+		if (this.options.caption && this.captionEl) {
+			const rawCaption = current.dataset.caption?.trim() || '';
+			const isCaptionValid = rawCaption && !/^[.,\-]+$/.test(rawCaption);
+
+			this.captionEl.innerText = isCaptionValid ? rawCaption : '';
+		}
 	
 		this.updatePagination();
 		if (this.options.thumbnails) this.renderThumbnails();

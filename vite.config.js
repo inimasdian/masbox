@@ -7,7 +7,7 @@ export default defineConfig({
 		lib: {
 			entry: path.resolve(__dirname, 'src/index.js'),
 			name: 'Masbox',
-			formats: ['es'],
+			formats: ['es', 'umd'],
 			fileName: () => 'masbox.js',
 		},
 		outDir: 'dist',

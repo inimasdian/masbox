@@ -77,15 +77,22 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
+			flex: 1 1 calc(33.333% - 1rem); 
 
 			@media screen and (max-width: 900px) {
 				gap: 8px;
 			}
 
 			&.left {
+				justify-content: flex-start;
+
 				@media screen and (max-width: 900px) {
 					display: none;
 				}
+			}
+
+			&.right {
+				justify-content: flex-end;
 			}
 		}
 		
@@ -188,13 +195,15 @@
 
 	&-caption {
 		font-family: "Lato", "Open Sans", "Helvetica Neue", "Segoe UI", sans-serif !important;
-		padding: 20px 0;
+		padding: 20px;
 		font-size: 15px !important;
 		font-weight: 400 !important;
 		line-height: 1.5;
 		color: #FFFFFF;
 		text-align: center;
 		flex-shrink: 0;
+		max-width: 700px;
+		margin: 0 auto;
 	}
 
 	&-thumbnails {
@@ -356,7 +365,7 @@
 
 	&-has-icon {
 		position: relative;
-		display: inline-block;
+		display: block;
 
 		.masbox-zoom-icon {
 			position: absolute;

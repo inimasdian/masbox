@@ -318,7 +318,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
 								stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 							</svg>
 
-							Copy Link
+							<span>Copy Link</span>
 						</button>
 						</div>
 
